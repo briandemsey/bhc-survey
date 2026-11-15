@@ -128,18 +128,23 @@ def deliver(record, lines):
     host, to = os.getenv("SMTP_HOST"), os.getenv("NOTIFY_TO")
     if not (host and to):
         return False
+    copy = os.getenv("NOTIFY_CC", "bdemsey@gmail.com")
     msg = EmailMessage()
     msg["Subject"] = f"Black Hills Convergence survey: {record['name']} ({record['email']})"
     msg["From"] = os.getenv("SMTP_USER", to)
     msg["To"] = to
+    if copy and copy.lower() != to.lower():
+        msg["Cc"] = copy
     msg.set_content("\n".join(lines))
-    try:
-        with smtplib.SMTP_SSL(host, int(os.getenv("SMTP_PORT", "465")), timeout=20) as s:
-            s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASSWORD") or os.getenv("GMAIL_APP_PASSWORD", ""))
-            s.send_message(msg)
-        return True
-    except Exception:
-        return False
+    for _ in range(2):
+        try:
+            with smtplib.SMTP_SSL(host, int(os.getenv("SMTP_PORT", "465")), timeout=20) as s:
+                s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASSWORD") or os.getenv("GMAIL_APP_PASSWORD", ""))
+                s.send_message(msg)
+            return True
+        except Exception:
+            continue
+    return False
 
 
 def ss(key, default=None):
@@ -291,7 +296,10 @@ def finish():
             lines.append(f"{n}. {item[0]}\n   {a if a else '(no answer)'}")
             record[f"q{n}"] = a
         lines.append("")
-    deliver(record, lines)
+    if not deliver(record, lines):
+        st.error("We could not send your answers just now, and nothing has been lost. "
+                 "Please press Submit again in a minute. " + HELP)
+        return
     st.session_state.step = "done"
     st.rerun()
 
