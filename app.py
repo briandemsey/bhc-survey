@@ -42,6 +42,8 @@ div.stButton>button,div[data-testid="stFormSubmitButton"]>button{background:#122
 div.stButton>button:hover,div[data-testid="stFormSubmitButton"]>button:hover{background:#0d1f3a;color:#fff;}
 .back{display:inline-block;background:#12294a;color:#fff!important;text-decoration:none;font-weight:600;border-radius:999px;padding:.7rem 1.8rem;margin-top:.6rem;}
 .back:hover{background:#0d1f3a;}
+.backbar a{color:#12294a;text-decoration:none;font-weight:600;font-size:15px;}
+.backbar a:hover{text-decoration:underline;}
 .note{color:#5b6b85;font-size:.95rem;}
 .partlabel{color:#2e6b5b;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;margin-top:1.4rem;}
 .testbanner{background:#fff4d6;border:1px solid #e6c667;border-radius:10px;padding:8px 12px;font-size:.9rem;}
@@ -164,6 +166,8 @@ def logo_bytes():
 
 
 def header():
+    if ss("step", "contact") != "done":
+        st.markdown('<div class="backbar"><a href="https://blackhillsconvergence.org">&larr; Back</a></div>', unsafe_allow_html=True)
     c1, _ = st.columns([1, 2])
     logo = logo_bytes()
     if logo:
