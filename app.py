@@ -1,11 +1,11 @@
 """
 Black Hills Convergence researcher survey.
 
-Flow: access code, then name / email / cell, then a text-message code,
-then the survey, then done. The completed survey is emailed to the organizer.
+Flow: name / email / cell (email must be on the invited list), then a
+text-message code, then the survey, then done. The completed survey is emailed to the organizer.
 
 Settings come from environment variables (set in Render, never in this file):
-  BHC_ACCESS_CODE
+  BHC_INVITED_EMAILS   (comma-separated invited email addresses; default bdemsey@demsey.com)
   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID
   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, NOTIFY_TO
   BHC_TEST_MODE=1   (local testing only: accepts the code 123456, no text sent)
@@ -99,8 +99,13 @@ def check_code(phone, code):
         return False
 
 
+def invited_emails():
+    raw = os.getenv("BHC_INVITED_EMAILS") or "bdemsey@demsey.com"
+    return {e.strip().lower() for e in re.split(r"[,;\s]+", raw) if e.strip()}
+
+
 def gate_available():
-    return bool(os.getenv("BHC_ACCESS_CODE")) and (TEST_MODE or _twilio()[0] is not None)
+    return TEST_MODE or _twilio()[0] is not None
 
 
 # ---------------------------------------------------------------- results
@@ -161,29 +166,12 @@ def header():
 
 
 # ---------------------------------------------------------------- pages
-def page_gate():
+def page_contact():
     st.title("Welcome")
-    st.write("Please enter the access code from your letter.")
+    st.write("This survey is by invitation. Please confirm who you are. We will text a code to your cell phone so that we know a real person is answering.")
     if not gate_available():
         st.error("This page is not available right now. " + HELP)
         return
-    with st.form("gate"):
-        code = st.text_input("Access code")
-        go = st.form_submit_button("Continue")
-    if go:
-        if ss("attempts", 0) >= MAX_CODE_ATTEMPTS:
-            st.error("Too many attempts. " + HELP)
-        elif code.strip().lower() == os.getenv("BHC_ACCESS_CODE", "").strip().lower():
-            st.session_state.step = "contact"
-            st.rerun()
-        else:
-            st.session_state.attempts = ss("attempts", 0) + 1
-            st.error("That code was not recognized. Please check your letter and try again.")
-
-
-def page_contact():
-    st.title("A little about you")
-    st.write("We will text a confirmation code to your cell phone so that we know a real person is answering.")
     with st.form("contact"):
         name = st.text_input("Full name", value=ss("name", ""))
         email = st.text_input("Email address", value=ss("email", ""))
@@ -198,6 +186,11 @@ def page_contact():
             st.error("Please enter a valid email address.")
         elif not phone:
             st.error("Please enter a 10-digit US cell number.")
+        elif ss("attempts", 0) >= MAX_CODE_ATTEMPTS:
+            st.error("Too many attempts. " + HELP)
+        elif email.strip().lower() not in invited_emails():
+            st.session_state.attempts = ss("attempts", 0) + 1
+            st.error("This survey is by invitation, and that email address is not on the invited list. " + HELP)
         else:
             st.session_state.update(name=name.strip(), email=email.strip().lower(), cell=cell.strip(), phone=phone)
             if ss("sends", 0) >= MAX_CODE_SENDS:
@@ -307,4 +300,4 @@ def page_done():
 
 
 header()
-{"gate": page_gate, "contact": page_contact, "verify": page_verify, "survey": page_survey, "done": page_done}[ss("step", "gate")]()
+{"contact": page_contact, "verify": page_verify, "survey": page_survey, "done": page_done}[ss("step", "contact")]()
