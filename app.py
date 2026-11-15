@@ -128,7 +128,7 @@ def deliver(record, lines):
     msg.set_content("\n".join(lines))
     try:
         with smtplib.SMTP_SSL(host, int(os.getenv("SMTP_PORT", "465"))) as s:
-            s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASSWORD", ""))
+            s.login(os.getenv("SMTP_USER", ""), os.getenv("SMTP_PASSWORD") or os.getenv("GMAIL_APP_PASSWORD", ""))
             s.send_message(msg)
         return True
     except Exception:
