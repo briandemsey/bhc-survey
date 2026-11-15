@@ -40,6 +40,8 @@ st.markdown(
 h1,h2,h3{color:#12294a;letter-spacing:-.02em;}
 div.stButton>button,div[data-testid="stFormSubmitButton"]>button{background:#12294a;color:#fff;border:0;border-radius:999px;padding:.6rem 1.6rem;font-weight:600;}
 div.stButton>button:hover,div[data-testid="stFormSubmitButton"]>button:hover{background:#0d1f3a;color:#fff;}
+.back{display:inline-block;background:#12294a;color:#fff!important;text-decoration:none;font-weight:600;border-radius:999px;padding:.7rem 1.8rem;margin-top:.6rem;}
+.back:hover{background:#0d1f3a;}
 .note{color:#5b6b85;font-size:.95rem;}
 .partlabel{color:#2e6b5b;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;margin-top:1.4rem;}
 .testbanner{background:#fff4d6;border:1px solid #e6c667;border-radius:10px;padding:8px 12px;font-size:.9rem;}
@@ -297,6 +299,7 @@ def finish():
 def page_done():
     st.title("Thank you")
     st.write("Your answers have been received. We will be in touch only in the way you chose.")
+    st.markdown('<a class="back" href="https://blackhillsconvergence.org">&larr; Return to Black Hills Convergence</a>', unsafe_allow_html=True)
 
 
 header()
