@@ -16,13 +16,12 @@ import json
 import os
 import re
 import smtplib
+import urllib.request
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
 
 import streamlit as st
-
-from logo_b64 import LOGO_B64
 
 HERE = Path(__file__).parent
 TEST_MODE = os.getenv("BHC_TEST_MODE") == "1"
@@ -140,9 +139,23 @@ def ss(key, default=None):
     return st.session_state.get(key, default)
 
 
+@st.cache_resource
+def logo_bytes():
+    """Fetch the logo from the live site so the picture lives in one place."""
+    try:
+        with urllib.request.urlopen("https://blackhillsconvergence.org/index.html", timeout=10) as r:
+            page = r.read().decode("utf-8")
+        m = re.search(r"--logo:url\(data:image/jpeg;base64,([^)]*)\)", page)
+        return base64.b64decode(m.group(1)) if m else None
+    except Exception:
+        return None
+
+
 def header():
     c1, _ = st.columns([1, 2])
-    c1.image(base64.b64decode(LOGO_B64), width=200)
+    logo = logo_bytes()
+    if logo:
+        c1.image(logo, width=200)
     if TEST_MODE:
         st.markdown('<div class="testbanner">TEST MODE: the text code is 123456. No text message is sent.</div>', unsafe_allow_html=True)
 
